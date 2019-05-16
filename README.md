@@ -11,4 +11,4 @@ After successful parsing, user should use the below cmd line to run the exe. For
 
 "main.exe -keyword 减持 预披露 -startdate 2019-01-01 -enddate 2019-05-15 -isfulltext false -tablename cninfo_test"
 
-It has a shortcoming that the data in the website are not surely completely stored into the database.
+It has a shortcoming that the data in the website are not guaranteed to be completely stored into the database.
