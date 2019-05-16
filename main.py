@@ -2,7 +2,6 @@
 """
 Created on May 15 2019
 
-@author: Yulu SU
 """
 import cninfo
 import cninfo_Database as DB
