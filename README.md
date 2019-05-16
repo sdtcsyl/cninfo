@@ -15,4 +15,6 @@ After successful parsing, two ways to run the exe.
 
 2. user can click the exe ico and input the information as requested.
 
+Regarding Chinese input problem, please input 'chcp936' in the cmd windows every time when you want to use the cmd method to run the program.
+
 It has a shortcoming that the data in the website are not guaranteed to be completely stored into the database.
