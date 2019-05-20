@@ -2,6 +2,7 @@
 """
 Created on May 15 2019
 
+@author: Yulu SU
 """
 import cninfo
 import cninfo_Database as DB
@@ -73,6 +74,9 @@ def func_clean_data(announcement, isfulltext):
         filename = announcement['secCode']+'_'+announcement['secName']+'_'+ announcementTitle+ '_'+ timestampStr
     else:
         filename = announcementTitle+ '_'+ timestampStr
+        
+    if len(filename)>150:
+        filename = filename[0:150]
     
     return data, fileweb, filename
 
@@ -81,8 +85,13 @@ def func_clean_data(announcement, isfulltext):
 def func_file_name(str_nm):
     str_nm = str_nm.replace('：','')
     str_nm = str_nm.replace(':','')
-    str_nm = str_nm.replace('*','')
+    str_nm = str_nm.replace('*','-')
     str_nm = str_nm.replace('/','')
+    str_nm = str_nm.replace("\\",'')
+    str_nm = str_nm.replace('?','')
+    str_nm = str_nm.replace('<','')
+    str_nm = str_nm.replace('>','')
+    str_nm = str_nm.replace('|','')
     return str_nm
 
 
@@ -226,7 +235,10 @@ if __name__ == '__main__':
             undownload_files = DB.sqlselect(tablename)
             for file in undownload_files:
                 url = url_pdf + file[1]
-                str_nm = func_file_name(file[0])+'.'+file[2].lower()
+                if file[2] == None:
+                    str_nm = func_file_name(file[0])+'.html'
+                else:
+                    str_nm = func_file_name(file[0])+'.'+file[2].lower()
                 path = File.createfolder(File.html_path + tablename) + '\\'+ str_nm
                 if func_download_file(url, path):
                    DB.sqlupdate('1', file[1], tablename,'')
