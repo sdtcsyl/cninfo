@@ -220,7 +220,7 @@ if __name__ == '__main__':
                                 file_full_name = file_orig_name + '_[' + str(num) +']'
                             full_data = (file_full_name,) + data + (0,)
                             DB.sqlwrite(full_data, tablename) 
-                except (json.JSONDecodeError, KeyError, AttributeError):
+                except:
                     pass
               
             numbers = DB.sqlselect(tablename,alldata=1)
