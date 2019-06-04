@@ -245,7 +245,7 @@ if __name__ == '__main__':
         
         #step 4, output control sheet
         output = DB.sqloutput(tablename)
-        output_excel = pd.DataFrame(output,columns = ['ID', 'CompanyCode', 'CompanyName', 'announcementTitle', 'Date&Time', 'WebUrl', 'FileType'])
+        output_excel = pd.DataFrame(output,columns = ['ID', 'CompanyCode', 'CompanyName', 'announcementTitle', 'Date&Time', 'WebUrl', 'FileType', 'Page'])
         output_excel.to_excel(File.db_path + tablename + '_ControlSheet.xlsx',index=False)
         
         print('Downloaded. Please check! ')
