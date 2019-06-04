@@ -191,24 +191,25 @@ if __name__ == '__main__':
         
         
         #step 2, retrieve the data from website and store the data into the database
-        count = totalpages = totalannouncement = 1    
+        url_full_search = cninfo.cninfo_search_url(keyword, sdate, edate, isfulltext, 0)            
+        data_search = func_request_data(url_full_search, header, cookie)
+        sessionid = data_search.cookies.get_dict()['JSESSIONID']
+        cookie = cninfo.cninfo_search_cookie(keyword, sessionid) 
+        json_search = data_search.json()
+                   
+        totalpages = json_search['totalpages']
+        totalannouncement = json_search['totalAnnouncement']                    
+        print('Step 1 has ' + str(totalpages) + ' pages and ' + str(totalannouncement) + ' announcements.')
          
-        for j in range(1,15):
-            for i in range(1, totalpages+1, 1):             
+        for j in range(1,5):
+            for i in range(0, totalpages+1, 1):             
                 url_full_search = cninfo.cninfo_search_url(keyword, sdate, edate, isfulltext, i)            
                 data_search = func_request_data(url_full_search, header, cookie)
                 
                 try: 
                     sessionid = data_search.cookies.get_dict()['JSESSIONID']
                     cookie = cninfo.cninfo_search_cookie(keyword, sessionid) 
-                    json_search = data_search.json()
-                    
-                    if count == 1:
-                        totalpages = json_search['totalpages']
-                        totalannouncement = json_search['totalAnnouncement']                    
-                        print('Step 1 has ' + str(totalpages) + ' pages and ' + str(totalannouncement) + ' announcements.')
-                        count += 1
-                        
+                    json_search = data_search.json()                        
                     announcements = json_search['announcements']
                     for announcement in announcements:
                         data, file_web, file_orig_name = func_clean_data(announcement, isfulltext)
@@ -218,7 +219,7 @@ if __name__ == '__main__':
                             while(DB.sqlcheck(tablename, filename = file_full_name)):
                                 num += 1
                                 file_full_name = file_orig_name + '_[' + str(num) +']'
-                            full_data = (file_full_name,) + data + (0,)
+                            full_data = (file_full_name,) + data + (i,0,)
                             DB.sqlwrite(full_data, tablename) 
                 except:
                     pass
