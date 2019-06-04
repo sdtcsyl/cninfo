@@ -35,6 +35,7 @@ def sqlwrite(data, table):
                        orgName varchar(5),
                        pageColumn varchar(5),
                        storageTime varchar(5),
+                       page varchar(2),
                        NY varchar(2)
                        )''') 
         cursor.execute('''insert into table_''' + 
@@ -59,9 +60,10 @@ def sqlwrite(data, table):
                        orgName,
                        pageColumn,
                        storageTime,
+                       page,
                        NY
                        ) 
-                       values (?,?,?,?,?,  ?,?,?,?,?,  ?,?,?,?,?, ?,?,?,?,?, ?)''', 
+                       values (?,?,?,?,?,  ?,?,?,?,?,  ?,?,?,?,?, ?,?,?,?,?, ?,?)''', 
                        (data))
     except sqlite3.IntegrityError:
         pass
@@ -96,6 +98,7 @@ def sqlselect(table, **args):
                        orgName varchar(5),
                        pageColumn varchar(5),
                        storageTime varchar(5),
+                       page varchar(2),
                        NY varchar(2)
                        )''') 
     
@@ -145,6 +148,7 @@ def sqlcheck(table, **kws):
                            orgName varchar(5),
                            pageColumn varchar(5),
                            storageTime varchar(5),
+                           page varchar(2),
                            NY varchar(2)
                            )''') 
     if 'filename' in kws:
@@ -165,7 +169,7 @@ def sqlcheck(table, **kws):
 def sqloutput(table):
     conn = sqlite3.connect(Files.db_path + 'cninfo.db')
     cursor = conn.cursor()
-    cursor.execute('select id, secCode, secName, announcementTitle, timestampStr, adjunctUrl, adjunctType from table_'+table)
+    cursor.execute('select id, secCode, secName, announcementTitle, timestampStr, adjunctUrl, adjunctType, page from table_'+table)
     res =cursor.fetchall()
     cursor.close()
     conn.commit()
