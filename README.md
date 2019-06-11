@@ -18,3 +18,5 @@ After successful parsing, two ways to run the exe.
 Regarding Chinese input problem, please input 'chcp936' in the cmd windows every time when you want to use the cmd method to run the program.
 
 It has a shortcoming that the data in the website are not guaranteed to be completely stored into the database.
+
+To overcome the shortcoming in the website, you can update the cookies in the json file. To find the cookies in the cninfo website, users can use the Developer Tools in browser. firstly, Press F12 and select Network tab, and then input the keyword in cninfo website. Second, find http://www.cninfo.com.cn/new/fulltextSearch?notautosubmit=&keyWord=**** in Developer Tools and get the cookie and input the cookie in json file accordingly. The cookie in Developer Tools is shown in the picture.
