@@ -13,6 +13,10 @@ import pandas as pd
 import argparse
 import threading
 from functools import wraps
+from urllib import request
+from http import cookiejar
+#from cninfo_Util import load_file_to_dic
+from datetime import datetime, timedelta
 
 
 #for step 1, get a table name for database
@@ -43,7 +47,6 @@ def func_request_data(url_full_search, header, cookie):
                         internet =False
     finally:
             return req
-
 
 #for step 2, clean the json data for database
 def func_clean_data(announcement, isfulltext):
@@ -78,6 +81,51 @@ def func_clean_data(announcement, isfulltext):
     
     return data, fileweb, filename
 
+def func_count(keyword, sdate, edate, isfulltext, cookie):
+    url_full_search = cninfo.cninfo_search_url(keyword, sdate, edate, isfulltext, 0)            
+    data_search = func_request_data(url_full_search, header, cookie)
+    
+    sessionid = data_search.cookies.get_dict()['JSESSIONID']
+    cookie = cninfo.cninfo_search_cookie(keyword, sessionid) 
+    json_search = data_search.json()
+    totalpages = json_search['totalpages']
+    totalannouncement = json_search['totalAnnouncement']
+    return totalpages, totalannouncement
+    
+def func_wrt_db(keyword, sdate, edate, isfulltext, cookie, tablename):
+    totalpages, totalannouncement = func_count(keyword, sdate, edate, isfulltext, cookie)
+    
+    nums  = DB.sqlselect(tablename,alldata=1)
+    
+    for j in range(1,15):
+        for i in range(1, totalpages+1, 1):             
+            url_full_search = cninfo.cninfo_search_url(keyword, sdate, edate, isfulltext, i)            
+            data_search = func_request_data(url_full_search, header, cookie)
+            
+            try: 
+                sessionid = data_search.cookies.get_dict()['JSESSIONID']
+                cookie = cninfo.cninfo_search_cookie(keyword, sessionid) 
+                json_search = data_search.json()                        
+                announcements = json_search['announcements']
+                for announcement in announcements:
+                    data, file_web, file_orig_name = func_clean_data(announcement, isfulltext)
+                    num  = 0
+                    file_full_name = file_orig_name
+                    if(DB.sqlcheck(tablename, fileweb = file_web)!=1):
+                        while(DB.sqlcheck(tablename, filename = file_full_name)):
+                            num += 1
+                            file_full_name = file_orig_name + '_[' + str(num) +']'
+                        full_data = (file_full_name,) + data + (i, 0,)
+                        DB.sqlwrite(full_data, tablename) 
+            except:
+                pass
+            
+        numbers  = DB.sqlselect(tablename,alldata=1)
+        
+        if (len(numbers) - len(nums)) == totalannouncement:
+            break
+        
+    return len(numbers)
 
 #for step 3, return a revised file name for downloading the PDF file
 def func_file_name(str_nm):
@@ -140,8 +188,7 @@ def func_download_file(url, path):
         return False
 
 
-if __name__ == '__main__':   
-    
+if __name__ == '__main__':    
     #step 1, get the cninfo class and initiate it
     cninfo = cninfo.cninfo()
     
@@ -177,57 +224,34 @@ if __name__ == '__main__':
           '''PROCEED or NOT [Y|N] \n''')
     proceed = input()
     
-    if proceed == 'Y':    
-        log = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' : keyword = ' + keyword + ', start date = ' +  sdate +', end date = '+edate + ', isfulltext = ' + isfulltext+ ', tablename = ' + tablename+'.\n'
-        File.writetxt(log)
+    if proceed == 'Y':         
         
         #keyword = '%E5%87%8F%E6%8C%81+%E9%A2%84%E6%8A%AB%E9%9C%B2'
-        sessionid = '004E026A14D6EC54C79B72D0C7CC9E22'
         
         header = cninfo.cninfo_search_header(keyword)
-        cookie = cninfo.cninfo_search_cookie(keyword, sessionid)
+        cookie = cninfo.cninfo_search_cookie(keyword, '')
         
         
         #step 2, retrieve the data from website and store the data into the database
-        url_full_search = cninfo.cninfo_search_url(keyword, sdate, edate, isfulltext, 0)            
-        data_search = func_request_data(url_full_search, header, cookie)
-        sessionid = data_search.cookies.get_dict()['JSESSIONID']
-        cookie = cninfo.cninfo_search_cookie(keyword, sessionid) 
-        json_search = data_search.json()
-                   
-        totalpages = json_search['totalpages']
-        totalannouncement = json_search['totalAnnouncement']                    
-        print('Step 1 has ' + str(totalpages) + ' pages and ' + str(totalannouncement) + ' announcements.')
-         
-        for j in range(1,5):
-            for i in range(0, totalpages+1, 1):             
-                url_full_search = cninfo.cninfo_search_url(keyword, sdate, edate, isfulltext, i)            
-                data_search = func_request_data(url_full_search, header, cookie)
-                
-                try: 
-                    sessionid = data_search.cookies.get_dict()['JSESSIONID']
-                    cookie = cninfo.cninfo_search_cookie(keyword, sessionid) 
-                    json_search = data_search.json()                        
-                    announcements = json_search['announcements']
-                    for announcement in announcements:
-                        data, file_web, file_orig_name = func_clean_data(announcement, isfulltext)
-                        num  = 0
-                        file_full_name = file_orig_name
-                        if(DB.sqlcheck(tablename, fileweb = file_web)!=1):
-                            while(DB.sqlcheck(tablename, filename = file_full_name)):
-                                num += 1
-                                file_full_name = file_orig_name + '_[' + str(num) +']'
-                            full_data = (file_full_name,) + data + (i,0,)
-                            DB.sqlwrite(full_data, tablename) 
-                except:
-                    pass
-              
-            numbers = DB.sqlselect(tablename,alldata=1)
-            if len(numbers) == totalannouncement:
-                break
+        totalpages, totalannouncement = func_count(keyword, sdate, edate, isfulltext, cookie)
+        print('This process has ' + str(totalpages) + ' pages and ' + str(totalannouncement) + ' announcements.')
+
+        t = 30
+        numbers = 0
+        start0 = sdate
+        first = datetime.strptime(start0, "%Y-%m-%d")
+        last = datetime.strptime(edate, "%Y-%m-%d")
+        first_last = first + timedelta(days=t)
+        while first < last:
+            if first_last > last:
+                first_last = last
+            end = first_last.strftime("%Y-%m-%d")
+            numbers = func_wrt_db(keyword, start0, end, isfulltext, cookie, tablename)            
+            first = first_last + timedelta(days=1)
+            first_last = first + timedelta(days=t)
+            start0 = first.strftime("%Y-%m-%d")         
         
-        print('Step 1 is done!')    
-        print('The step 2 has collected ' + str(len(numbers)) + ' PDFs infomration . ')
+        print('This process has collected ' + str(numbers) + ' PDFs infomration . ')
         
         #step 3, retrieve the data from database and download the PDF files accordingly.
         for j in range(1,10):
@@ -242,12 +266,11 @@ if __name__ == '__main__':
                 if func_download_file(url, path):
                    DB.sqlupdate('1', file[1], tablename,'')
         
-        
         #step 4, output control sheet
         output = DB.sqloutput(tablename)
-        output_excel = pd.DataFrame(output,columns = ['ID', 'CompanyCode', 'CompanyName', 'announcementTitle', 'Date&Time', 'WebUrl', 'FileType', 'Page'])
+        output_excel = pd.DataFrame(output,columns = ['ID', 'CompanyCode', 'CompanyName', 'announcementTitle', 'Date&Time', 'WebUrl', 'FileType', 'page'])
         output_excel.to_excel(File.db_path + tablename + '_ControlSheet.xlsx',index=False)
         
-        print('Downloaded. Please check! ')
+        print('Done. Please check! ')
         time.sleep(10)
         

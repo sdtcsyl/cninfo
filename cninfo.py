@@ -1,16 +1,75 @@
 # -*- coding: utf-8 -*-
 """
 Created on May 15 2019
-
 """
 
 import urllib
+import json
+#import execjs
+
+def load_dic( filename: str):
+    with open(filename, "r") as f:
+        dic = json.load(f)
+        return dic
 
 class cninfo:
     def __init__(self):
         self.url_index = 'http://www.cninfo.com.cn/new/index'
         self.url_search = 'http://www.cninfo.com.cn/new/fulltextSearch/full?'
         self.url_pdf = 'http://static.cninfo.com.cn/'
+        self.func_cookies= '''
+            var cookieName = "cninfo_search_record_cookie";
+            /**
+             * 获取指定cookie的值
+             * @param cookieName
+             * @returns
+             */
+            function getCookie(cookieName) {
+            	var strCookie = document.cookie;
+            	var arrCookie = strCookie.split("; ");
+            	for (var i = 0; i < arrCookie.length; i++) {
+            		var arr = arrCookie[i].split("=");
+            		if (cookieName == arr[0]) {
+            			return arr[1];
+            		}
+            	}
+            	return "";
+            }
+            /**
+             * 记录cookie
+             * @param varData
+             */
+            function markCookie(varData) {
+            	varData = $.trim(varData);
+            	varData = encodeURI(varData);
+            	//alert('varData:'+varData);
+            	var cookieValue = getCookie(cookieName);
+            	//alert('b:' + cookieValue);
+            	if (cookieValue == '') {
+            		cookieValue = varData;
+            	} else {
+            		// 去重
+            		var temp = cookieValue.split('|');
+            		cookieValue = varData;
+            		// 最多存储20个
+            		var var_length = 19;
+            		if (temp.length < var_length) {
+            			var_length = temp.length;
+            		}
+            		for (var i = 0; i < var_length; i++) {
+            			if (temp[i] == varData) {
+            				continue;
+            			} else {
+            				cookieValue += '|' + temp[i];
+            			}
+            		}
+            	}
+            	//alert('a:' + cookieValue);
+            	var exp = new Date();
+            	exp.setTime(exp.getTime() + 10 * 24 * 60 * 60 * 1000);	//设置过期时间为10天
+            	document.cookie = cookieName + "=" + cookieValue + ";expires=" + exp.toGMTString() + ";path=/";
+            }'''
+        #self.cxt = execjs.compile(self.decrypt)
         
         
     def cninfo_search_header(self, keyword):
@@ -26,18 +85,12 @@ class cninfo:
                 }
         return header
         
-    def cninfo_search_cookie(self, keyword, sessionid): 
-        cookie = {
-                'JSESSIONID' : sessionid,
-                'noticeTabClicks' : '%7B%22szse%22%3A3%2C%22sse%22%3A0%2C%22hot%22%3A0%2C%22myNotice%22%3A0%7D',
-                'tradeTabClicks' : '%7B%22financing%20%22%3A0%2C%22restricted%20%22%3A0%2C%22blocktrade%22%3A0%2C%22myMarket%22%3A0%2C%22financing%22%3A2%7D', 
-                'JSESSIONID' : sessionid,
-                '_sp_ses.2141' : '*',
-                'insert_cookie' : '45380249',
-                'cninfo_search_record_cookie'  : keyword,
-                '_sp_id.2141' : '77994138-513b-4934-ad4e-e34e19c6ec58.1557832115.1.1557832843.1557832115.d2fa6cc6-2fcd-418e-afc4-2ebe11b019ec'
-                }
-        return cookie
+    def cninfo_search_cookie(self, keyword, sessionid=''): 
+        self.cookies = load_dic('cookie.json')
+        self.cookies['cninfo_search_record_cookie']=keyword
+        if sessionid != '':
+            self.cookies['JSESSIONID']=sessionid
+        return self.cookies
     
     def cninfo_search_keyword(self, keyword):
         if keyword == None:
@@ -73,3 +126,5 @@ class cninfo:
         cninfo_search_paras = 'searchkey=' + keyword +' &sdate=' + sdate + '&edate=' + edate + '&isfulltext='+ isfulltext +'&sortName=nothing&sortType=desc&pageNum='+ str(page)        
         return self.url_search + cninfo_search_paras
     
+    
+        
