@@ -171,13 +171,13 @@ def SaveAsPDF(str_nm, r):
 def func_download_file(url, path):
     try:
         r = requests.get(url, stream=True, timeout = 600)
-    except requests.ConnectionError:    #if the internet is not steable
+    except requests.ConnectionError:    #if the internet is not stable
         internet = True
         while internet:
             try:
                time.sleep(600) #retry after timeout
                r = requests.get(url, stream=True, timeout = 600)
-            except requests.ConnectionError:    #if the internet is not steable
+            except requests.ConnectionError:    #if the internet is not stable
                 pass
             else:
                 internet =False
